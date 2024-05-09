@@ -8,24 +8,26 @@
 use crate::api::Api;
 use api::{cache::Cache, details::AppDetails};
 use dioxus::{
-  desktop::{Config, WindowBuilder},
-  prelude::*,
+  desktop::{Config, WindowBuilder}, prelude::*
 };
 use log::warn;
 use rand::prelude::SliceRandom;
 use serde::Deserialize;
-use std::{collections::HashMap, fs};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 pub mod api;
 
 pub type Err = Box<dyn std::error::Error>;
 pub type Res<T> = Result<T, Err>;
 
-#[cfg(target_os = "windows")]
-const PATH: &str = "C:\\Program Files (x86)\\Steam\\steamapps\\libraryfolders.vdf";
+fn get_library_path() -> PathBuf {
+  #[cfg(target_os = "windows")]
+  let path = std::path::Path::new("C:\\Program Files (x86)\\Steam\\steamapps\\libraryfolders.vdf");
+  #[cfg(target_os = "linux")]
+  let path = directories::BaseDirs::new().unwrap().home_dir().join(".steam/steam/steamapps/libraryfolders.vdf");
 
-#[cfg(target_os = "linux")]
-const PATH: &str = "~/.steam/steam/steamapps/libraryfolders.vdf";
+  path.to_path_buf()
+}
 
 const CDN: &str = "https://cdn.cloudflare.steamstatic.com/steam/apps";
 
@@ -57,8 +59,9 @@ fn app() -> Element {
     let mut data = data.to_owned();
     async move {
       let mut api = Api::new().unwrap();
-      let raw: HashMap<u64, RawLibrary> =
-        keyvalues_serde::from_str(&fs::read_to_string(PATH).unwrap()).unwrap();
+      let path = get_library_path();
+      warn!("Reading library from {:?}", path);
+      let raw: HashMap<u64, RawLibrary> = keyvalues_serde::from_str(&fs::read_to_string(path).unwrap()).unwrap();
       let mut ids: Vec<u64> = raw
         .into_iter()
         .flat_map(|(_, l)| l.apps.into_keys().collect::<Vec<_>>())
