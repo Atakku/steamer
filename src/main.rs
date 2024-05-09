@@ -24,7 +24,7 @@ fn get_library_path() -> PathBuf {
   #[cfg(target_os = "windows")]
   let base = Path::new("C:\\Program Files (x86)\\Steam");
   #[cfg(target_os = "linux")]
-  let base = BaseDirs::new().unwrap().home_dir().join(".steam\\steam");
+  let base = directories::BaseDirs::new().unwrap().home_dir().join(".steam\\steam");
   
   base.join("steamapps\\libraryfolders.vdf")
 }
