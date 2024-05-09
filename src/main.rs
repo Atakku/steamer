@@ -3,7 +3,7 @@
 // This project is dual licensed under MIT and Apache.
 
 #![allow(non_snake_case)]
-#![windows_subsystem = "windows"]
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use crate::api::Api;
 use api::{cache::Cache, details::AppDetails};

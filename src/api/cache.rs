@@ -1,18 +1,14 @@
-// Copyright 2023 Atakku <https://atakku.dev>
-//
-// This project is dual licensed under MIT and Apache.
-
-use super::details::AppDetails;
-use crate::Res;
-use directories::ProjectDirs;
+use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use log::info;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fs, path::PathBuf};
 
-#[cfg(debug_assertions)]
-const NAME: &str = "cache.json";
+use std::{collections::HashMap, fs, io::Write, path::PathBuf};
 
-#[cfg(not(debug_assertions))]
+use crate::Res;
+use directories::ProjectDirs;
+
+use super::details::AppDetails;
+
 const NAME: &str = "cache.bin";
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -33,12 +29,7 @@ impl Cache {
       info!("Loading existing cache from {:?}", path);
       match fs::read(path) {
         Ok(data) => {
-          #[cfg(debug_assertions)]
-          let de = serde_json::from_slice(&data);
-          #[cfg(not(debug_assertions))]
-          let de = bincode::deserialize(&data);
-
-          match de {
+          match serde_json::from_reader(ZlibDecoder::new(data.as_slice())) {
             Ok(config) => return Ok(config),
             Err(err) => log::warn!("Failed to deserialize cache: {err}"),
           }
@@ -54,10 +45,8 @@ impl Cache {
     if !root.exists() {
       fs::create_dir_all(&root)?;
     }
-    #[cfg(debug_assertions)]
-    let se = serde_json::to_vec(self);
-    #[cfg(not(debug_assertions))]
-    let se = bincode::serialize(self);
-    Ok(fs::write(root.join(NAME), se?)?)
+    let mut buf = ZlibEncoder::new(Vec::new(), Compression::default());
+    buf.write_all(&serde_json::to_vec(self)?)?;
+    Ok(fs::write(root.join(NAME), buf.finish()?)?)
   }
 }
