@@ -10,10 +10,10 @@ use api::{cache::Cache, details::AppDetails};
 use dioxus::{
   desktop::{Config, WindowBuilder}, prelude::*
 };
-use log::warn;
+use log::{info, warn};
 use rand::prelude::SliceRandom;
 use serde::Deserialize;
-use std::{collections::HashMap, fs, path::{Path, PathBuf}};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 pub mod api;
 
@@ -22,7 +22,7 @@ pub type Res<T> = Result<T, Err>;
 
 fn get_library_path() -> PathBuf {
   #[cfg(target_os = "windows")]
-  let base = Path::new("C:\\Program Files (x86)\\Steam");
+  let base = std::path::Path::new("C:\\Program Files (x86)\\Steam");
   #[cfg(target_os = "linux")]
   let base = directories::BaseDirs::new().unwrap().home_dir().join(".steam\\steam");
   
@@ -59,8 +59,9 @@ fn app() -> Element {
     let mut data = data.to_owned();
     async move {
       let mut api = Api::new().unwrap();
-      let raw: HashMap<u64, RawLibrary> =
-        keyvalues_serde::from_str(&fs::read_to_string(get_library_path()).unwrap()).unwrap();
+      let path = get_library_path();
+      warn!("Reading library from {:?}", path);
+      let raw: HashMap<u64, RawLibrary> = keyvalues_serde::from_str(&fs::read_to_string(path).unwrap()).unwrap();
       let mut ids: Vec<u64> = raw
         .into_iter()
         .flat_map(|(_, l)| l.apps.into_keys().collect::<Vec<_>>())
