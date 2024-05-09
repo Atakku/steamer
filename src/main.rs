@@ -67,6 +67,8 @@ fn app() -> Element {
         .flat_map(|(_, l)| l.apps.into_keys().collect::<Vec<_>>())
         .collect();
 
+      ids.dedup();
+
       ids.shuffle(&mut rand::thread_rng());
 
       for id in ids {
