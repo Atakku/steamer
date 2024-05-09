@@ -24,8 +24,12 @@ impl Api {
     })
   }
 
+  pub fn is_cached(&self, id: &u64) -> bool {
+    self.cache.0.contains_key(id)
+  }
+
   pub async fn get(&mut self, id: u64) -> Res<&AppDetails> {
-    if !self.cache.0.contains_key(&id) {
+    if !self.is_cached(&id) {
       tokio::time::sleep(Duration::from_secs(1)).await;
       let url = format!("https://store.steampowered.com/api/appdetails?appids={id}&l=en");
       let json = self.client.get(url).send().await?.text().await?;

@@ -12,7 +12,6 @@ use dioxus::{
   prelude::*,
 };
 use log::warn;
-use rand::prelude::SliceRandom;
 use serde::Deserialize;
 use std::{collections::HashMap, fs, path::PathBuf};
 
@@ -72,11 +71,10 @@ fn app() -> Element {
         .into_iter()
         .flat_map(|(_, l)| l.apps.into_keys().collect::<Vec<_>>())
         .collect();
-
+  
       ids.sort();
       ids.dedup();
-
-      ids.shuffle(&mut rand::thread_rng());
+      ids.sort_by_key(|id| !api.is_cached(id));
 
       for id in ids {
         match api.get(id).await {
@@ -89,7 +87,7 @@ fn app() -> Element {
     }
   });
 
-  let hover_id = use_signal(Option::<i64>::default);
+  let hover_id = use_signal(Option::<u64>::default);
 
   rsx! {
     body {
@@ -108,7 +106,7 @@ fn app() -> Element {
 #[derive(PartialEq, Clone, Props)]
 struct ClickableProps {
   app: AppDetails,
-  hover_id: Signal<Option<i64>>,
+  hover_id: Signal<Option<u64>>,
 }
 
 fn draw_card(mut s: ClickableProps) -> Element {

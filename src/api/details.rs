@@ -10,6 +10,7 @@ use serde_with::PickFirst;
 
 type Text = String;
 type Num = i64;
+type Id = u64;
 
 nestruct::flatten! {
   #[serde_as]
@@ -24,7 +25,7 @@ nestruct::flatten! {
     },
     name: Text,
     #[serde(alias = "steam_appid")]
-    id: Num,
+    id: Id,
     #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
     required_age: Num?,
     is_free: bool,
@@ -36,7 +37,7 @@ nestruct::flatten! {
     short_description: Text,
     fullgame: {
       #[serde_as(as = "PickFirst<(_, DisplayFromStr)>")]
-      appid: Num,
+      appid: Id,
       name: Text,
     }?,
     supported_languages: Text?,
